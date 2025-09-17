@@ -1,4 +1,5 @@
 #include <GL/glut.h>
+using namespace std;
 
 void display() {
     glClearColor(0.0f, 0.0f, 0.0f, 1.0f); // Set clear color to black
