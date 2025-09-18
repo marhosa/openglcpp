@@ -19,6 +19,8 @@ void display() {
     //have used GL_RGBA also as I have dealt with these 4 colours.
 }
 
+
+
 int main(int argc, char** argv) {
     // Initialize GLUT
     glutInit(&argc, argv);
