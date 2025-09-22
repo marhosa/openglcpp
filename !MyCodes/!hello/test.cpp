@@ -8,13 +8,13 @@ void display() {
     glClear(GL_COLOR_BUFFER_BIT);
 
     glPointSize(20.0); //initialize point size
-    glBegin(GL_POINTS); // * Begin, geometric primitive
 
-    glColor3ub(0, 0, 0); //geometry color
-    glVertex2f(0.0, 0.0); //location
+    // * Begin, geometric primitive
+    glBegin(GL_POINTS); 
+    glColor3ub(0, 0, 0); // * Geometry Color
 
-    glColor3ub(1, 0, 0); //geometry color
-    glVertex2f(0.1, 0.1); //location
+    glVertex2f(0.0, 0.0); //location dot 1
+    glVertex2f(0.1, 0.1); //location dot 2
 
     glEnd(); // * End
 
@@ -27,7 +27,7 @@ void display() {
 int main(int argc, char** argv) {
   glutInit(&argc, argv);
   glutInitWindowSize(600, 600);
-  glutCreateWindow("Connecting Two Points with a Line");
+  glutCreateWindow("Matthew Rhomar Santos");
   glutDisplayFunc(display);
   glutMainLoop();
   return 0;
