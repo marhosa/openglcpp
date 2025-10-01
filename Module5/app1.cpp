@@ -2,162 +2,110 @@
 #include <cmath>
 #include <string>
 
-// Functions demonstrated: glutInit, glutInitDisplayMode, glutInitWindowSize, glutCreateWindow,
-// glutFullScreen, glRasterPos2f, glutBitmapString, glutKeyboardFunc, glutMouseFunc,
-// glutMotionFunc, glutTimerFunc, glutPostRedisplay
+// Dino parameters
+float dinoX = -0.6f, dinoY = -0.5f;
+float dinoW = 0.08f, dinoH = 0.12f;
+bool isJumping = false;
+float jumpVel = 0.0f;
+float gravity = -0.002f;
 
-float orbitAngle = 0.0f;
-bool animate = true;
-bool inFullScreen = false;
-bool dragging = false;
-float planetOffsetX = 0.0f;
-float planetOffsetY = 0.0f;
-float bgColor[3] = {0.02f, 0.05f, 0.10f};
+// Cactus parameters
+float cactusX = 1.2f, cactusY = -0.5f;
+float cactusW = 0.06f, cactusH = 0.15f;
+float cactusSpeed = 0.015f;
 
-void drawText(float x, float y, const std::string& text)
-{
-    glRasterPos2f(x, y);
-    glutBitmapString(GLUT_BITMAP_HELVETICA_18,
-                     reinterpret_cast<const unsigned char*>(text.c_str()));
-}
+// Score
+int score = 0;
+bool gameOver = false;
 
-void drawScene()
-{
-    // Sun
-    glColor3f(1.0f, 0.8f, 0.1f);
-    glBegin(GL_TRIANGLE_FAN);
-    glVertex2f(0.0f, 0.0f);
-    for (int i = 0; i <= 32; ++i) {
-        float angle = (static_cast<float>(i) / 32.0f) * 2.0f * 3.14159f;
-        glVertex2f(std::cos(angle) * 0.18f, std::sin(angle) * 0.18f);
-    }
-    glEnd();
-
-    // Planet orbiting with drag offset
-    float radius = 0.55f;
-    float px = std::cos(orbitAngle) * radius + planetOffsetX;
-    float py = std::sin(orbitAngle) * radius + planetOffsetY;
-
-    glColor3f(0.2f, 0.7f, 1.0f);
-    glBegin(GL_TRIANGLE_FAN);
-    glVertex2f(px, py);
-    for (int i = 0; i <= 24; ++i) {
-        float angle = (static_cast<float>(i) / 24.0f) * 2.0f * 3.14159f;
-        glVertex2f(px + std::cos(angle) * 0.12f, py + std::sin(angle) * 0.12f);
-    }
+void drawRect(float x, float y, float w, float h, float r, float g, float b) {
+    glColor3f(r, g, b);
+    glBegin(GL_QUADS);
+        glVertex2f(x, y);
+        glVertex2f(x+w, y);
+        glVertex2f(x+w, y+h);
+        glVertex2f(x, y+h);
     glEnd();
 }
 
-void display()
-{
+void resetGame() {
+    dinoY = -0.5f;
+    isJumping = false;
+    jumpVel = 0.0f;
+    cactusX = 1.2f;
+    score = 0;
+    gameOver = false;
+}
+
+void display() {
+    glClearColor(1,1,1,1);
     glClear(GL_COLOR_BUFFER_BIT);
 
-    drawScene();
+    // Ground
+    drawRect(-1.0f, -0.5f, 2.0f, -0.5f, 0.6f, 0.6f, 0.6f);
 
-    glColor3f(1.0f, 1.0f, 1.0f);
-    drawText(-0.95f, 0.90f, "App1: Orbit Demo");
-    drawText(-0.95f, 0.75f, "Space: pause/resume animation");
-    drawText(-0.95f, 0.62f, "F: toggle fullscreen");
-    drawText(-0.95f, 0.49f, "Left drag: offset orbit");
-    drawText(-0.95f, 0.36f, "Right click: reset background");
-    drawText(-0.95f, -0.90f, "Esc: quit");
+    // Dino
+    drawRect(dinoX, dinoY, dinoW, dinoH, 0.0f, 0.0f, 0.0f);
+
+    // Cactus
+    drawRect(cactusX, cactusY, cactusW, cactusH, 0.0f, 0.6f, 0.0f);
 
     glutSwapBuffers();
 }
 
-void updateTimer(int)
-{
-    if (animate) {
-        orbitAngle += 0.02f;
-        if (orbitAngle > 2.0f * 3.14159f) {
-            orbitAngle -= 2.0f * 3.14159f;
+void update(int value) {
+    if (!gameOver) {
+        // Jump physics
+        if (isJumping) {
+            dinoY += jumpVel;
+            jumpVel += gravity;
+            if (dinoY <= -0.5f) {
+                dinoY = -0.5f;
+                isJumping = false;
+                jumpVel = 0.0f;
+            }
         }
-        glutPostRedisplay();
+
+        // Move cactus
+        cactusX -= cactusSpeed;
+        if (cactusX < -1.2f) {
+            cactusX = 1.2f;
+            score++;
+        }
+
+        // Collision detection
+        if (dinoX < cactusX + cactusW &&
+            dinoX + dinoW > cactusX &&
+            dinoY < cactusY + cactusH &&
+            dinoY + dinoH > cactusY) {
+            gameOver = true;
+        }
     }
 
-    glutTimerFunc(16, updateTimer, 0); // 60 FPS approx
+    glutPostRedisplay();
+    glutTimerFunc(16, update, 0); // ~60 fps
 }
 
-void handleKeyboard(unsigned char key, int, int)
-{
-    switch (key) {
-    case ' ':
-        animate = !animate;
-        break;
-    case 'f':
-    case 'F':
-        if (!inFullScreen) {
-            glutFullScreen();
-            inFullScreen = true;
-        } else {
-            inFullScreen = false;
-            glutReshapeWindow(800, 600);
-            glutPositionWindow(50, 50);
-        }
-        break;
-    case 'c':
-    case 'C':
-        bgColor[0] = 0.05f;
-        bgColor[1] = 0.10f;
-        bgColor[2] = 0.25f;
-        glClearColor(bgColor[0], bgColor[1], bgColor[2], 1.0f);
-        glutPostRedisplay();
-        break;
-    case 27:
+void keyboard(unsigned char key, int, int) {
+    if (key == ' ' && !isJumping && !gameOver) {
+        isJumping = true;
+        jumpVel = 0.04f; // jump strength
+    } else if (key == 'r') {
+        resetGame();
+    } else if (key == 27) { // ESC
         glutLeaveMainLoop();
-        return;
-    default:
-        return;
     }
-
-    glutPostRedisplay();
 }
 
-void handleMouse(int button, int state, int x, int y)
-{
-    if (button == GLUT_LEFT_BUTTON) {
-        dragging = (state == GLUT_DOWN);
-    } else if (button == GLUT_RIGHT_BUTTON && state == GLUT_DOWN) {
-        bgColor[0] = 0.02f;
-        bgColor[1] = 0.05f;
-        bgColor[2] = 0.10f;
-        glClearColor(bgColor[0], bgColor[1], bgColor[2], 1.0f);
-        planetOffsetX = 0.0f;
-        planetOffsetY = 0.0f;
-    }
-
-    glutPostRedisplay();
-}
-
-void handleMotion(int x, int y)
-{
-    if (!dragging) {
-        return;
-    }
-
-    int width = glutGet(GLUT_WINDOW_WIDTH);
-    int height = glutGet(GLUT_WINDOW_HEIGHT);
-
-    planetOffsetX = (static_cast<float>(x) / width) * 2.0f - 1.0f;
-    planetOffsetY = 1.0f - (static_cast<float>(y) / height) * 2.0f;
-
-    glutPostRedisplay();
-}
-
-int main(int argc, char** argv)
-{
+int main(int argc, char** argv) {
     glutInit(&argc, argv);
     glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGB);
-    glutInitWindowSize(800, 600);
-    glutCreateWindow("App1 - Orbit Demo");
-
-    glClearColor(bgColor[0], bgColor[1], bgColor[2], 1.0f);
+    glutInitWindowSize(800, 400);
+    glutCreateWindow("GLUT Dino Chrome");
 
     glutDisplayFunc(display);
-    glutKeyboardFunc(handleKeyboard); // Register keyboard handler
-    glutMouseFunc(handleMouse);       // Register mouse handler
-    glutMotionFunc(handleMotion);     // Register drag handler
-    glutTimerFunc(0, updateTimer, 0); // Start timer updates
+    glutKeyboardFunc(keyboard);
+    glutTimerFunc(0, update, 0);
 
     glutMainLoop();
     return 0;

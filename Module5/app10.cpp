@@ -13,7 +13,7 @@ float stars[STAR_COUNT][2];
 
 float cometX = -1.2f;
 float cometY = 0.45f;
-float cometSpeed = 0.005f;
+float cometSpeed = 0.020f;
 bool animateScene = true;
 bool dragComet = false;
 bool fullScreen = false;
