@@ -2,36 +2,67 @@
 #include <iostream>
 using namespace std;
 
-// ! Settings:
-
-// * Positions:
-float theTwoDots_x = 0.0f;
-float theTwoDots_y = -0.5f; // start on the "ground"
+// ! Settings you can modify:
 
 // * Velocity:
-float theTwoDots_vx = 0.02f;
-float theTwoDots_vy = 0.00f;
+float speed = 1.0f;
+
+// * Jump Power
+float jumpPower = 0.06f;
 
 // * Gravity:
-float gravity = -0.002f;
+float gravity = -0.003f;
 
 // * Ground level:
 float groundY = -0.5f;
 
 
 
-// ! Below this line contains all source codes 
+
+// ! Some Settings not recommended to modify:
+
+// * Positions:
+// Player Anchor Point
+float player_x = 0.0f;
+float player_y = groundY;
+float player_vx = 0.0f;
+float player_vy = 0.0f;
+
+// Obstacle Anchor Point
+float obstacle_x = -1.0f;
+float obstacle_y = groundY;
+float obstacle_vx = 0.02f;
+float obstacle_vy = 0.0f;
+
+// Background
 
 
 
 
-// * theTwoDots
-void theTwoDots() {
+
+
+// ! Below this line contains all codes to run, not reco to modify
+
+
+
+
+// * Player
+void PlayerKun() {
     glPointSize(20.0);
 
     glBegin(GL_POINTS);
     glColor3ub(0, 0, 255);
-    glVertex2f(0.0 + theTwoDots_x, 0.0 + theTwoDots_y); // dot 1
+    glVertex2f(0.0 + player_x, 0.0 + player_y); // dot 1
+    glEnd();
+}
+
+// * Obstacle
+void Obstacle() {
+    glPointSize(40.0);
+
+    glBegin(GL_POINTS);
+    glColor3ub(0, 255, 255);
+    glVertex2f(0.0 + obstacle_x, 0.0 + obstacle_y); // dot 1
     glEnd();
 }
 
@@ -40,29 +71,35 @@ void display() {
     glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT);
 
-    theTwoDots();
+    Obstacle();
+    PlayerKun();
+    
 
     glFlush();
 }
 
 // * Update movement
 void update(int value) {
-    // Move horizontally
-    theTwoDots_x += theTwoDots_vx;
 
-    // Bounce off left/right edges
-    if (theTwoDots_x > 1.0f || theTwoDots_x < -1.0f) {
-        theTwoDots_vx = -theTwoDots_vx;
-    }
+    // * Player Logic:
 
     // Apply gravity
-    theTwoDots_vy += gravity;
-    theTwoDots_y += theTwoDots_vy;
+    player_vy += gravity;
+    player_y += player_vy;
 
     // Stop at ground
-    if (theTwoDots_y < groundY) {
-        theTwoDots_y = groundY;
-        theTwoDots_vy = 0.0f;
+    if (player_y < groundY) {
+        player_y = groundY;
+        player_vy = 0.0f;
+    }
+
+
+
+    // * Obstacle Logic:
+
+    obstacle_x -= obstacle_vx * speed;
+    if (obstacle_x <= -1) {
+        obstacle_x = 1;
     }
 
     glutPostRedisplay();
@@ -71,10 +108,16 @@ void update(int value) {
 
 // * Keyboard controls
 void keyboard(unsigned char key, int x, int y) {
-    if (key == 32) { // spacebar
-        if (theTwoDots_y <= groundY + 0.001f) { 
+    if (key == 119 || key == 32) { // w key
+        if (player_y <= groundY + 0.001f) { 
             // only jump if on ground
-            theTwoDots_vy = 0.05f;
+            player_vy = jumpPower;
+        }
+    }
+    if (key == 115) { // w key
+        if (!(player_y <= groundY + 0.001f)) { 
+            // only jump if on ground
+            player_vy =  -jumpPower;
         }
     }
     if (key == 27) { // ESC to exit
